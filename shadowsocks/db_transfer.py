@@ -78,7 +78,7 @@ class DbTransfer(object):
         conn = cymysql.connect(host=Config.MYSQL_HOST, port=Config.MYSQL_PORT, user=Config.MYSQL_USER,
                                passwd=Config.MYSQL_PASS, db=Config.MYSQL_DB, charset='utf8')
         cur = conn.cursor()
-        cur.execute("SELECT port, u, d, transfer_enable, passwd, switch, enable FROM user")
+        cur.execute("SELECT port, u, d, transfer_enable, passwd, switch, enable, expire_time  FROM user")
         rows = []
         for r in cur.fetchall():
             rows.append(list(r))
@@ -93,6 +93,9 @@ class DbTransfer(object):
         for row in rows:
             if ServerPool.get_instance().server_is_run(row[0]) > 0:
                 if row[1] + row[2] >= row[3]:
+                    logging.info('db stop server at port [%s]' % (row[0]))
+                    ServerPool.get_instance().del_server(row[0])
+                if row[7] < time.time():
                     logging.info('db stop server at port [%s]' % (row[0]))
                     ServerPool.get_instance().del_server(row[0])
             elif ServerPool.get_instance().server_run_status(row[0]) is False:
